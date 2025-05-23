@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task 2 - Day 19</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom right, #5cb1a6, #6dc1b5);
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 860px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .section-title {
+      font-size: 20px;
+      margin-top: 30px;
+      margin-bottom: 12px;
+      color: #34495e;
+      border-bottom: 2px solid #4caf91;
+      padding-bottom: 4px;
+    }
+    .question {
+      margin-bottom: 25px;
+    }
+    .english {
+      font-size: 16px;
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+    .translation {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    input[type="text"] {
+      width: 140px;
+      padding: 6px;
+      margin: 0 3px;
+      font-size: 15px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+    }
+    .check-btn {
+      margin-top: 6px;
+      background: #4caf91;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .feedback {
+      margin-top: 6px;
+      font-weight: bold;
+    }
+    .correct { color: green; }
+    .incorrect { color: red; }
+    @media (max-width: 600px) {
+      input[type="text"] {
+        width: 100px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Task 2 - Day 19</h2>
+
+  <div class="section-title">一. 句子填空（Water）</div>
+
+  <div id="q1" class="question"></div>
+  <div id="q2" class="question"></div>
+  <div id="q3" class="question"></div>
+  <div id="q4" class="question"></div>
+</div>
+
+<script>
+  const sentences = [
+    {
+      id: "s1",
+      text: "Humans need access to clean, safe drinking water in order to live, and poor water quality is a major cause of disease and death. Drinking water is contaminated by sewage or waste water in some developing countries, where there is often a lack of the means to treat and supply water to citizens, while developed countries tend to have much better sanitation and citizens have access to clean tap water.",
+      translation: "人类需要干净安全的饮用水，水质差会导致疾病和死亡。发展中国家的水源常被污染，缺乏处理和供应系统，而发达国家卫生状况更好，有干净水可用。",
+      containerId: "q1"
+    },
+    {
+      id: "s2",
+      text: "The supply of water is also an important political issue. Huge amounts of water are needed for agriculture and industry, and as populations grow, there is more pressure on water supplies.",
+      translation: "水的供应也是重要的政治问题。农业和工业用水量巨大，随着人口增长，水资源压力加剧。",
+      containerId: "q2"
+    },
+    {
+      id: "s3",
+      text: "If water is free, people take it for granted. They leave taps running while washing or brushing their teeth. If we have to pay for water, we will use it more responsibly, and governments can invest more money in maintaining and improving water supply systems, which are extremely expensive.",
+      translation: "如果水是免费的，人们不懂得珍惜；若必须付费，人们会更合理使用，政府也能投资维护昂贵的供水系统。",
+      containerId: "q3"
+    },
+    {
+      id: "s4",
+      text: "Many people carry bottles of water wherever they go (to work or to the gym), but we should consume less bottled water because plastic water bottles add to litter and waste problems.",
+      translation: "很多人随身携带瓶装水，但我们应减少消费，因为塑料瓶会加剧垃圾和废物问题。",
+      containerId: "q4"
+    }
+  ];
+
+  function getRandomIndexes(array, min = 5, max = 7) {
+    const count = Math.min(Math.floor(Math.random() * (max - min + 1)) + min, array.length);
+    const set = new Set();
+    while (set.size < count) {
+      const i = Math.floor(Math.random() * array.length);
+      const word = array[i].replace(/[.,()"]/g, '');
+      if (word.length > 2 && !word.includes("'")) set.add(i);
+    }
+    return Array.from(set);
+  }
+
+  function renderSentence({ id, text, translation, containerId }) {
+    const words = text.split(" ");
+    const blanks = getRandomIndexes(words);
+    const answers = {};
+    const html = words.map((word, i) => {
+      const clean = word.replace(/[.,()"]/g, "");
+      const punct = word.match(/[.,()"]$/) ? word.slice(-1) : "";
+      if (blanks.includes(i)) {
+        const inputId = `${id}_${i}`;
+        answers[inputId] = clean.toLowerCase();
+        return `<input type="text" id="${inputId}" placeholder="...">${punct}`;
+      }
+      return word;
+    }).join(" ");
+    document.getElementById(containerId).innerHTML = `
+      <div class="english">${html}</div>
+      <div class="translation">${translation}</div>
+      <button class="check-btn" onclick='checkSentence("${id}", ${JSON.stringify(answers)})'>Check</button>
+      <div class="feedback" id="fb_${id}"></div>
+    `;
+  }
+
+  function checkSentence(id, answers) {
+    const feedback = document.getElementById("fb_" + id);
+    let correct = true;
+    for (const [inputId, expected] of Object.entries(answers)) {
+      const val = document.getElementById(inputId).value.trim().toLowerCase();
+      if (val !== expected) correct = false;
+    }
+    feedback.innerHTML = correct
+      ? "<span class='correct'>✔ 正确！</span>"
+      : `<span class='incorrect'>✘ 有错误</span> 正确答案：${Object.values(answers).join(" / ")}`;
+  }
+
+  // 初始化所有句子
+  sentences.forEach(renderSentence);
+</script>
+</body>
+</html>
